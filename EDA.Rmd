@@ -1,0 +1,307 @@
+---
+title: "MGT 6203 HW1 Part2"
+output: HW1_part2
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code.
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*.
+
+```{r}
+
+# Load necessary libraries
+library(readr)
+
+# Import the data
+used_cars <- read_csv("UsedCars.csv")
+
+# Display the first few rows of the dataset
+head(used_cars)
+```
+
+```{r}
+# Check for NA values and print the result
+na_count <- sum(is.na(used_cars))
+print(na_count)
+```
+
+```{r}
+str(used_cars)  # Check the structure of your dataset
+```
+
+```{r}
+#used_cars$Metallic <- as.factor(used_cars$Metallic)
+#used_cars$Automatic <- as.factor(used_cars$Automatic)
+#summary(used_cars)
+
+library(ggplot2)
+ggplot(used_cars, aes(x = Age, y = Price)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(title = "Price vs Age of Cars", x = "Age (months)", y = "Price (Euros)")
+
+library(ggplot2)
+ggplot(used_cars, aes(x = HP, y = Price)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(title = "Price vs HP", x = "HP (ps)", y = "Price (Euros)")
+
+library(ggplot2)
+ggplot(used_cars, aes(x = KM, y = Price)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(title = "Price vs KM", x = "KM (km)", y = "Price (Euros)")
+
+library(ggplot2)
+ggplot(used_cars, aes(x = CC, y = Price)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(title = "Price vs CC", x = "CC (cc)", y = "Price (Euros)")
+
+library(ggplot2)
+ggplot(used_cars, aes(x = Weight, y = Price)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(title = "Price vs Weight", x = "Weight (lbs)", y = "Price (Euros)")
+
+
+library(ggplot2)
+ggplot(used_cars, aes(x = Doors, y = Price)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(title = "Price vs Doors", x = "Doors (number)", y = "Price (Euros)")
+
+
+library(ggplot2)
+ggplot(used_cars, aes(x = Gears, y = Price)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(title = "Price vs Gears", x = "Gears (number)", y = "Price (Euros)")
+
+
+library(ggplot2)
+ggplot(used_cars, aes(x = Metallic, y = Price)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(title = "Price vs Metallic", x = "Metallic (category)", y = "Price (Euros)")
+
+
+library(ggplot2)
+ggplot(used_cars, aes(x = Automatic, y = Price)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(title = "Price vs Automatic", x = "Automatic (category)", y = "Price (Euros)")
+```
+
+```{r}
+boxplot(used_cars$Price, main = "Boxplot of Car Prices")
+
+```
+
+```{r}
+# Calculate Z-scores
+z_scores <- scale(used_cars$Price)
+
+# Identify outliers
+outliers <- used_cars[abs(z_scores) > 3, ]
+
+```
+
+```{r}
+Q1 <- quantile(used_cars$Price, 0.25)
+Q3 <- quantile(used_cars$Price, 0.75)
+IQR <- Q3 - Q1
+
+# Identify outliers
+outliers <- used_cars[used_cars$Price < (Q1 - 1.5 * IQR) | used_cars$Price > (Q3 + 1.5 * IQR),]
+
+```
+
+```{r}
+library(ggplot2)
+
+ggplot(used_cars, aes(x = "", y = Price)) +
+  geom_boxplot() +
+  labs(title = "Boxplot of Car Prices")
+
+```
+
+```{r}
+model <- lm(Price ~ Age + KM + HP + Metallic + Automatic + CC + Doors + Gears + Weight, data = used_cars)
+cooks_d <- cooks.distance(model)
+
+# Identify influential points
+influential_points <- used_cars[cooks_d > 1, ]
+plot(cooks_d, main = "Cook's Distance", ylab = "Distance", xlab = "Observation Index")
+abline(h = 1, col = "red", lty = 2)  # Add a horizontal line at the threshold
+```
+
+```{r}
+leverage <- hatvalues(model)
+
+```
+
+```{r}
+high_leverage <- used_cars[leverage > (2 * (length(coef(model)) / nrow(used_cars))), ]
+
+```
+
+```{r}
+plot(leverage, main = "Leverage Values", ylab = "Leverage", xlab = "Observation Index")
+abline(h = 2 * (length(coef(model)) / nrow(used_cars)), col = "red", lty = 2)  # Threshold line
+
+```
+
+```{r}
+# View influential points
+print(influential_points)
+
+# View high leverage points
+#print(high_leverage)
+
+```
+
+```{r}
+# Run the linear regression
+model <- lm(Price ~ Age + KM + HP + Metallic + Automatic + CC + Doors + Gears + Weight, data = used_cars)
+
+# Show the summary of the regression results
+```
+
+```{r}
+summary(model)
+```
+
+```{r}
+# Extract coefficients and standard errors}
+coefficients <- summary(model)$coefficients
+
+# Calculate t-statistics
+t_statistics <- coefficients[, 1] / coefficients[, 2]
+
+# Combine calculated t-statistics with those from summary
+results <- data.frame(
+  Variable = rownames(coefficients),
+  Calculated_t = t_statistics,
+  Summary_t = coefficients[, 3]  # t-values from summary
+)
+
+print(results)
+```
+
+```{r}
+df_residual <- model$df.residual
+print(df_residual)
+
+```
+
+```{r}
+alpha <- 0.05
+critical_t <- qt(1 - alpha / 2, df_residual)  # two-tailed test
+print(critical_t)
+
+```
+
+```         
+```
+
+```{r}
+fitted_values <- fitted(model)
+
+```
+
+```{r}
+residuals <- used_cars$Price - fitted_values
+```
+
+```{r}
+seventh_fitted_value <- fitted_values[7]
+seventh_residual <- residuals[7]
+```
+
+```{r}
+critical_t <- qt(1 - 0.05 / 2, df_residual)  # for two-tailed test
+
+```
+
+```         
+```
+
+```{r}
+# Calculate fitted values
+fitted_values <- model$fitted.values
+
+# Calculate residuals
+residuals <- model$residuals
+
+# Combine original values, fitted values, and residuals for the first 10 observations
+results <- data.frame(
+    Original_Price = used_cars$Price[1:10],
+    Fitted_Values = fitted_values[1:10],
+    Residuals = residuals[1:10]
+)
+```
+
+```{r}
+# Check if residuals equal zero for the first 10 observations
+residuals_equal_zero <- residuals[1:10] == 0
+print(residuals_equal_zero)
+
+```
+
+```{r}
+plot(model$residuals)
+abline(h = 0, col = "red")
+
+# Set up plotting area for 4 plots
+par(mfrow = c(2, 2))
+
+# Create diagnostic plots
+plot(model)
+
+# Reset the plotting area to default
+par(mfrow = c(1, 1))
+```
+
+```{r}
+# Set up plotting area for 4 plots
+par(mfrow = c(2, 2))
+
+# Create diagnostic plots
+plot(model)
+
+# Reset the plotting area to default
+par(mfrow = c(1, 1))
+
+```
+
+```{r}
+qqnorm(model$residuals)
+qqline(model$residuals, col = "red")
+
+```
+
+```{r}
+# Display the model summary
+model_summary <- summary(model)
+
+# Extract R-squared and Adjusted R-squared
+r_squared <- model_summary$r.squared
+adjusted_r_squared <- model_summary$adj.r.squared
+
+cat("R-squared:", r_squared, "\n")
+cat("Adjusted R-squared:", adjusted_r_squared, "\n")
+
+# Calculate RMSE
+residuals <- model$residuals
+rmse <- sqrt(mean(residuals^2))
+
+# Print RMSE
+cat("Root Mean Squared Error (RMSE):", rmse, "\n")
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.

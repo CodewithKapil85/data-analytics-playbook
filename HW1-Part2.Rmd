@@ -1,0 +1,367 @@
+---
+title: "MGT 6203 HW1 Part2"
+output: HW1_part2
+---
+
+**TASK 1:**
+
+1.  **Import that data into R**:
+
+Run a linear regression of **Price** on all the available explanatory
+variables (i.e., **Age, KM, HP, Metallic, Automatic, CC, Doors, Gears, Weight**). Use the
+**summary()** function to show the regression results. (**Note**: R is case sensitive, so be careful
+with the variable names.)
+
+```{r}
+# Load necessary libraries
+library(readr)
+
+# Import the data
+used_cars <- read_csv("UsedCars.csv")
+
+# Display the first few rows of the dataset
+head(used_cars)
+
+```
+
+Now that the data is imported, run a linear regression **(lm)** with Price as the dependent variable and all other variables as independent variables:
+
+```{r}
+# Fit the linear regression model
+model <- lm(Price ~ Age + KM + HP + Metallic + Automatic + CC + Doors + Gears + Weight, data = used_cars)
+
+# Show the summary of the regression results
+summary(model)
+
+
+```
+
+2.  **Calculate Fitted Values and Residuals:**
+
+After running linear regression model, we can obtain the fitted values and residuals:
+
+```{r}
+# Calculate fitted values
+fitted_values <- model$fitted.values
+
+# Calculate residuals
+residuals <- model$residuals
+```
+
+**Combine Original Values, Fitted Values, and Residuals**
+
+Next, you can create a data frame that includes the original prices, fitted values, and residuals for the first 10 observations:
+
+```{r}
+# Combine the original values, fitted values, and residuals
+results <- data.frame(
+  Original_Price = used_cars$Price[1:10],
+  Fitted_Values = fitted_values[1:10],
+  Residuals = residuals[1:10]
+)
+
+# Display the results
+print(results)
+
+```
+
+Check if Residuals are Equal to Zero
+
+```{r}
+# Check if any residuals equal to zero
+any(residuals[1:10] == 0)
+```
+
+**TASK. 2:**
+
+3.  **Extract Coefficients and Standard Errors to calculate t-statistics:**
+
+    ```{r}
+    # Get the summary of the linear model
+    model_summary <- summary(model)
+
+    # Extract coefficients and standard errors
+    coefficients <- model_summary$coefficients
+    ```
+
+    Reproduce the t-statistics for all, using the defining formula. Colist your calculated tstatistics along with the tstatistics generated from **summary()** of the regression results. They should be exactly the same. The t-statistic can be calculated using the formula: t = Coefficient / Standard Error
+
+    ```{r}
+    # Calculate t-statistics
+    calculated_t_statistics <- coefficients[, 1] / coefficients[, 2]
+
+    ```
+
+    ```{r}
+    # Combine calculated t-statistics with those from summary
+    results <- data.frame(
+      Variable = rownames(coefficients),
+      Calculated_t = calculated_t_statistics,
+      Summary_t = coefficients[, 3]  # t-values from summary
+    )
+
+    # Display the results
+    print(results)
+    ```
+
+4.  Determine the **critical value** (or cutoff) of the tstatistic for a estimate to be considered as
+    significant at **95% confidence level**. You need to first determine the degree of freedom of
+    your model (**Hint**: you can simply retrieve the value of **df.residual** from the regression
+    result.) Then you need to find the corresponding percentile of the t distribution (with that
+    degree of freedom). (**Hint**: use **qt()** function to find a certain percentile of a t distribution.)
+
+```{r}
+# Get the degrees of freedom
+df_residual <- model$df.residual
+print(df_residual)  # This should be 1254
+
+```
+
+Next, use the `qt()` function to find the **critical t-value** for a two-tailed test at a 95% confidence level. Since it’s a two-tailed test, you need to look for the critical value at 1 − α/2 where α=0.05:
+
+```{r}
+# Calculate the critical t-value for 95% confidence level
+alpha <- 0.05
+critical_t <- qt(1 - alpha / 2, df_residual)
+print(critical_t)
+
+```
+
+5.  Calculate the p-value for each Betaj using the defining formula p = 2.Pr(t\<-\|tstat\|).
+    (**Hint**: use **pt()** function for the cdf of t distribution.) Co-list your calculated pvalues along
+    with the pvalues generated from **summary()** of the regression results. They should be
+    exactly the same.
+
+    ```{r}
+    # Assuming 'model' is your linear regression model
+    model_summary <- summary(model)
+
+    # Extract t-statistics from the model summary
+    t_statistics <- model_summary$coefficients[, "t value"]
+
+    # Get the degrees of freedom from the model
+    df_residual <- model$df.residual
+    ```
+
+    ```{r}
+    print(t_statistics)
+    ```
+
+    ```{r}
+    print(df_residual)
+    ```
+
+    ```{r}
+    # Calculate p-values using the t-statistics
+    p_values_calculated <- 2 * (1 - pt(abs(t_statistics), df_residual))
+
+    # Print the calculated p-values
+    print(p_values_calculated)
+
+    ```
+
+    ```{r}
+    # Create a data frame for comparison
+    results <- data.frame(
+      Variable = rownames(model_summary$coefficients),
+      Calculated_p = p_values_calculated,
+      Summary_p = model_summary$coefficients[, "Pr(>|t|)"]  # Extract p-values from summary
+    )
+
+    # Print the comparison results
+    print(results)
+    ```
+
+    ```{r}
+    tolerance <- 1e-10
+    discrepancies <- results[abs(results$Calculated_p - results$Summary_p) > tolerance, ]
+    print(discrepancies)
+    ```
+
+    ```{r}
+    critical_value <- 1.961
+    significant_by_t <- abs(t_statistics) > critical_value
+    ```
+
+    ```{r}
+    significant_by_p <- p_values_calculated < 0.05
+    ```
+
+6.  Which explanatory variables have significant effects on the outcome, that is, which
+    estimates are significantly different from zero? You can find the answers either by
+    comparing the t-statistics (obtained in Step 3) to the critical values (obtained in Step 4) or by
+    comparing the p-values (obtained in Step 5) to (1confidence level), as we discussed in class.
+    The conclusions should be the same.
+
+    ```{r}
+    # Assuming you have already defined significant_by_t and significant_by_p
+    results_summary <- data.frame(
+      Variable = rownames(model_summary$coefficients),
+      t_value = t_statistics,
+      p_value = p_values_calculated,
+      Significant_by_t = significant_by_t,
+      Significant_by_p = significant_by_p
+    )
+
+    # Display significant variables
+    significant_variables <- results_summary[results_summary$Significant_by_t | results_summary$Significant_by_p, ]
+    print(significant_variables)
+
+    ```
+
+    **Task 3: R-squared & VIF (Variance Inflation Factor)**
+
+7.  Calculate the R-squared of the regression you have performed, using the defining formula
+
+    R-squared = 1 - SSE/SST
+
+    Compare your calculated value with the Rsquared value calculated by the
+    routine. (**Hint**: you can retrieve **r.squared** from the **summary()** output.) Again, they should
+    be the same.
+
+    ```{r}
+
+    # Extract observed and fitted values
+    observed <- used_cars$Price
+    fitted <- model$fitted.values
+
+    # Calculate residuals and total mean
+    ss_residual <- sum((observed - fitted)^2)
+    ss_total <- sum((observed - mean(observed))^2)
+
+    # Calculate R-squared
+    r_squared_calculated <- 1 - (ss_residual / ss_total)
+    print(r_squared_calculated)
+    ```
+
+    ```{r}
+    #Retrieve R-squared from Summary:
+    r_squared_summary <- model_summary$r.squared
+    ```
+
+    ```{r}
+    #Compare the Values:
+    cat("Calculated R-squared:", r_squared_calculated, "\n")
+    cat("R-squared from summary:", r_squared_summary, "\n")
+
+    ```
+
+8.  Install and load the package “**car**”. Use the **vif()** function included in the package to
+    calculate the **variance inflation factor (VIF)** for the estimators. Examine the VIF values
+    and discuss if there is any sign of multicollinearity among independent variables.
+
+    ```{r}
+    install.packages("car")
+
+    ```
+
+    ```{r}
+    library(car)
+    # Calculate VIF
+    vif_values <- vif(model)
+
+    # Print VIF values
+    print(vif_values)
+
+    # Interpretation
+    if (any(vif_values > 5)) {
+      cat("There are signs of multicollinearity among independent variables.\n")
+    } else {
+      cat("No significant multicollinearity detected among independent variables.\n")
+    }
+
+    ```
+
+9.  Reproduce the VIF for the coefficient of **Weight** (which has the largest VIF value), following
+    these two steps:
+    								
+
+    1.  Regress **Weight** on all the other independent variables, and obtain the R-squared
+
+    2.  Calculate the VIF using the defining formula.	
+
+    ```{r}
+    # Step 1: Regress Weight on all other independent variables
+    weight_model <- lm(Weight ~ Age + KM + HP + Metallic + Automatic + CC + Doors + Gears, data = used_cars)
+
+    # Obtain the R-squared value
+    weight_r_squared <- summary(weight_model)$r.squared
+    cat("R-squared for Weight model:", weight_r_squared, "\n")
+
+    # Step 2: Calculate VIF using the defining formula
+    vif_weight <- 1 / (1 - weight_r_squared)
+    cat("VIF for Weight:", vif_weight, "\n")
+    ```
+
+    **Task 4: Model Comparison** 						
+
+    10. Remove from the model the independent variables which are NOT significant according to
+        your conclusion in Step 6. Run a new linear regression of **Price** on the remaining
+        independent variables. Use the **summary()** function to show the regression results.
+
+        ### Step 1: Identify Non-Significant Variables
+
+        From your previous analysis (Step 6),we have identified which variables were not significant based on their p-values or t-statistics. The non-significant variables are `Metallic`, `CC`, and `Doors` 
+
+```{r}
+
+# New linear regression model excluding non-significant variables
+new_model <- lm(Price ~ Age + KM + HP + Automatic + Gears + Weight, data = used_cars)
+
+# Show the summary of the new regression model
+summary(new_model)
+
+```
+
+11. Retrieve and compare the Rsquared and Adjusted RSquared from the two models (the full
+    regression with all independent variables in Step 1 versus the new model with only the
+    independent variables that are significant in Step 10). Discuss your findings with regard to
+    the relative magnitudes of the Rsquared and the Adjusted RSquared from the two models
+    and what they imply.
+
+```{r}
+# Full model summary
+full_model <- lm(Price ~ Age + KM + HP + Metallic + Automatic + CC + Doors + Gears + Weight, data = used_cars)
+full_model_summary <- summary(full_model)
+
+# New model summary
+new_model <- lm(Price ~ Age + KM + HP + Automatic + Gears + Weight, data = used_cars)
+new_model_summary <- summary(new_model)
+
+# Retrieve R-squared and Adjusted R-squared values
+full_r_squared <- full_model_summary$r.squared
+full_adj_r_squared <- full_model_summary$adj.r.squared
+
+new_r_squared <- new_model_summary$r.squared
+new_adj_r_squared <- new_model_summary$adj.r.squared
+
+# Print results
+cat("Full Model R-squared:", full_r_squared, "\n")
+cat("Full Model Adjusted R-squared:", full_adj_r_squared, "\n")
+cat("New Model R-squared:", new_r_squared, "\n")
+cat("New Model Adjusted R-squared:", new_adj_r_squared, "\n")
+
+```
+
+12. Use the results from the model with a better fit to discuss the effects of certain
+    independent variables on the dependent variable: Holding everything else equal, how much
+    the sales price would decrease if a car were **one year older**? What if a car accumulated
+    **10,000 more kilometers**?
+
+```{r}
+
+# new model coefficients
+age_coefficient <- -129.9  # Example coefficient for Age
+km_coefficient <- -0.01463  # Example coefficient for KM
+
+# Effect of being one year older
+price_decrease_age <- age_coefficient * 12  # 12 months in a year
+
+# Effect of accumulating 10,000 more kilometers
+price_decrease_km <- km_coefficient * 10000  # 10,000 kilometers
+
+# Print the results
+cat("Price decrease for being one year older: €", price_decrease_age, "\n")
+cat("Price decrease for accumulating 10,000 more kilometers: €", price_decrease_km, "\n")
+
+```
