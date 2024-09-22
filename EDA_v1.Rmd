@@ -1,0 +1,77 @@
+```{r}
+#import libraries 
+if (!require(tidyverse)) install.packages("tidyverse")
+if (!require(ISLR)) install.packages("ISLR")
+if (!require(corrplot)) install.packages("corrplot")
+if (!require(corrgram)) install.packages("corrgram")
+if (!require(car)) install.packages("car")
+
+library(tidyverse)
+library(ISLR)
+library(corrplot)
+library(corrgram)
+library(car)
+```
+
+```{r}
+# Load necessary libraries
+library(readr)
+
+# Import the data
+used_cars <- read_csv("UsedCars.csv")
+
+# Display the first few rows of the dataset
+head(used_cars)
+
+#EDA Exploratory Data Analysis
+str(used_cars)
+summary(used_cars)
+
+used_cars_corr <- select(used_cars, Price, Age, KM, HP, CC, Doors, Gears, Weight)
+
+str(used_cars_corr)
+#Correlation charts
+#option 1 Using dplyr
+
+corrgram(used_cars_corr, order = TRUE, lower.panel = panel.shade, upper.panel = panel.cor, text.panel=panel.txt, col.regions = colorRampPalette(c("red", "orange", "white", "darkgreen", "navy")))
+
+#Option 2 filter dataframe
+#Get numeric columns
+used_cars.cols <- sapply(used_cars, is.numeric)
+
+#Filter for correlation
+used_cars_corr2 <- cor(used_cars[,used_cars.cols])
+corrgram(used_cars_corr2, order = TRUE, lower.panel = panel.shade, upper.panel = panel.cor, text.panel=panel.txt, col.regions = colorRampPalette(c("red", "orange", "white", "darkgreen", "navy")))
+
+#option1 Use factor variable
+full_model = lm(formula = Price ~ Age + KM + HP + Metallic + Automatic + CC + 
+    Doors + Gears + Weight, data = used_cars)
+summary(full_model)
+
+
+# used_cars_no_id = used_cars[, !names(used_cars) %in% c("id", "Model")]
+# full_model = lm(Price ~ ., data = used_cars_no_id)
+# summary(full_model)
+
+# str(used_cars)
+
+#Option1
+plot(full_model)
+
+#option2
+par(mfrow = c(2, 2))
+plot(full_model, which = c(1,2,3,5))
+
+#Cooks Distance
+par(mfrow = c(1,1))
+plot(full_model, which = c(4))
+
+#VIF
+vif(full_model)
+
+#New Model with subset
+used_cars_subset <- subset(used_cars, select = -c(Metallic, CC, Doors, Id, Model))
+new_model <- lm(Price ~ Age + KM + HP + Automatic + Gears + Weight, data = used_cars_subset)
+summary(new_model)
+
+```

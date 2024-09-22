@@ -1,0 +1,361 @@
+```{r}
+#import libraries 
+if (!require(tidyverse)) install.packages("tidyverse")
+if (!require(ISLR)) install.packages("ISLR")
+if (!require(corrplot)) install.packages("corrplot")
+if (!require(corrgram)) install.packages("corrgram")
+if (!require(car)) install.packages("car")
+
+library(tidyverse)
+library(ISLR)
+library(corrplot)
+library(corrgram)
+library(car)
+```
+
+```{r}
+# Load necessary libraries
+library(readr)
+
+# Import the data
+used_cars <- read_csv("UsedCars.csv")
+
+# Display the first few rows of the dataset
+head(used_cars)
+
+
+
+```
+
+```{r}
+#EDA Exploratory Data Analysis
+str(used_cars)
+summary(used_cars)
+
+
+```
+
+```{r}
+full_model = lm(formula = Price ~ Age + KM + HP + Metallic + Automatic + CC + 
+    Doors + Gears + Weight, data = used_cars)
+summary(full_model)
+```
+
+```{r}
+# Get the summary of the full model
+full_model_summary <- summary(full_model)
+
+# Extract coefficients
+coefficients <- full_model_summary$coefficients
+
+# Display coefficients
+print(coefficients)
+```
+
+```{r}
+# Get the summary of the full model
+full_model_summary <- summary(full_model)
+
+# Extract coefficients and convert to a data frame
+coefficients <- as.data.frame(full_model_summary$coefficients)
+
+# Add a column for variable names
+coefficients$Variable <- rownames(coefficients)
+
+# Sort coefficients by the Estimate (the coefficient value)
+sorted_coefficients <- coefficients[order(-coefficients$Estimate), ]
+
+# Print sorted coefficients
+print(sorted_coefficients)
+
+```
+
+```{r}
+vif(full_model)
+
+
+```
+
+```{r}
+# Calculate fitted values
+used_cars$fitted_values <- fitted(full_model)
+
+# Calculate residuals
+used_cars$residuals <- residuals(full_model)
+
+# Select the relevant columns for the first 10 observations
+results <- used_cars %>% 
+  select(Price, fitted_values, residuals) %>% 
+  head(10)
+
+# Display the results
+print(results)
+
+# Check if the residuals equal to zero
+all(used_cars$residuals == 0) # This will return FALSE as residuals usually won't be exactly zero
+```
+
+```{r}
+# Calculate fitted values
+fitted_values <- fitted(full_model)
+
+# Calculate residuals
+residuals <- residuals(full_model)
+
+# Get the 7th fitted value and residual
+fitted_7th <- fitted_values[7]
+residual_7th <- residuals[7]
+
+# Print the results
+cat("Fitted value (7th):", fitted_7th, "\n")
+cat("Residual (7th):", residual_7th, "\n")
+```
+
+```{r}
+# Assuming 'used_cars' is your dataframe and 'Price' is the dependent variable
+Price <- used_cars$Price
+
+# Option A: Using var(yhat)
+yhat <- fitted(full_model)  # Get fitted values from the model
+SST_A <- var(yhat) * (length(yhat) - 1)
+
+# Option B: Using resid(lm.res)
+SST_B <- sum(resid(full_model)^2)
+
+# Option C: Using fitted(lm.res)
+SST_C <- sum((fitted(full_model) - mean(Price))^2)
+
+# Option D: Using var(Price)
+SST_D <- var(Price) * (length(Price) - 1)
+
+# Display results
+cat("SST using var(yhat):", SST_A, "\n")
+cat("SST using resid(lm.res):", SST_B, "\n")
+cat("SST using fitted(lm.res):", SST_C, "\n")
+cat("SST using var(Price):", SST_D, "\n")
+
+```
+
+```{r}
+# Assuming you have already stored your model summary
+model_summary <- summary(full_model)
+
+# Extract R-squared and number of observations
+r_squared <- model_summary$r.squared
+n <- length(used_cars$Price)  # total number of observations
+k <- length(coef(full_model)) - 1  # number of predictors
+
+# Calculate SSE from residual standard error
+rse <- model_summary$sigma
+sse <- rse^2 * (n - k - 1)
+
+# Calculate SST
+sst <- sse / (1 - r_squared)
+
+sst  # This will give you the SST value
+
+
+```
+
+```{r}
+# Get summary of the model
+summary_model <- summary(full_model)
+
+# Extract coefficients and standard errors
+coefficients <- summary_model$coefficients[, "Estimate"]
+std_errors <- summary_model$coefficients[, "Std. Error"]
+
+# Calculate t-statistics
+t_statistics_calculated <- coefficients / std_errors
+
+# Extract t-statistics from summary
+t_statistics_summary <- summary_model$coefficients[, "t value"]
+
+# Create a data frame to compare
+comparison <- data.frame(
+  Coefficient = names(coefficients),
+  Calculated_t = t_statistics_calculated,
+  Summary_t = t_statistics_summary
+)
+
+# Print the comparison
+print(comparison)
+
+# Check if they are identical
+identical(t_statistics_calculated, t_statistics_summary) # Should return TRUE if they match
+
+
+```
+
+```{r}
+# Step 1: Retrieve degrees of freedom
+df_residual <- df.residual(full_model)
+
+# Step 2: Determine the critical value for a two-tailed test at 95% confidence level
+alpha <- 0.05
+critical_value <- qt(1 - alpha / 2, df_residual)
+
+# Print the results
+cat("Degrees of Freedom:", df_residual, "\n")
+cat("Critical t-value for 95% confidence level:", critical_value, "\n")
+
+```
+
+```{r}
+# Step 1: Retrieve t-statistics and degrees of freedom
+summary_model <- summary(full_model)
+t_statistics <- summary_model$coefficients[, "t value"]
+df_residual <- df.residual(full_model)
+
+# Step 2: Calculate p-values using the formula
+# p-value = 2 * (1 - pt(abs(t), df))
+calculated_p_values <- 2 * (1 - pt(abs(t_statistics), df_residual))
+
+# Step 3: Combine calculated p-values with those from the summary
+results <- data.frame(
+  Coefficient = rownames(summary_model$coefficients),
+  Calculated_P_Value = calculated_p_values,
+  Summary_P_Value = summary_model$coefficients[, "Pr(>|t|)"]
+)
+
+# Print the results
+print(results)
+
+```
+
+```{r}
+# Retrieve p-values
+p_values <- summary_model$coefficients[, "Pr(>|t|)"]
+# Retrieve t-statistics
+t_statistics <- summary_model$coefficients[, "t value"]
+
+# Determine critical value for 95% confidence
+critical_t <- qt(0.975, df_residual)
+
+# Identify significant variables using p-values
+significant_vars_p <- names(p_values[p_values < 0.05])
+
+# Identify significant variables using t-statistics
+significant_vars_t <- names(t_statistics[abs(t_statistics) > critical_t])
+
+# Print results
+cat("Significant variables using p-values:\n", significant_vars_p, "\n")
+cat("Significant variables using t-statistics:\n", significant_vars_t, "\n")
+
+```
+
+```{r}
+# Assuming full_model is your linear model
+y <- used_cars$Price # Actual values
+y_hat <- fitted(full_model) # Fitted values
+y_mean <- mean(y) # Mean of actual values
+
+# Calculate SST
+SST <- sum((y - y_mean)^2)
+
+# Calculate SSR
+SSR <- sum((y - y_hat)^2)
+
+# Calculate R-squared
+R_squared_calculated <- 1 - (SSR / SST)
+
+# Get R-squared from the model summary
+R_squared_model <- summary(full_model)$r.squared
+
+# Print both values
+cat("Calculated R-squared:", R_squared_calculated, "\n")
+cat("Model R-squared:", R_squared_model, "\n")
+```
+
+```{r}
+# Calculate VIF
+vif_values <- vif(full_model)
+
+# Print VIF values
+print(vif_values)
+
+# Examine VIF values
+if (any(vif_values > 10)) {
+  cat("There is high multicollinearity in the model.\n")
+} else if (any(vif_values > 5)) {
+  cat("There is moderate multicollinearity in the model.\n")
+} else {
+  cat("There is no significant multicollinearity in the model.\n")
+}
+
+```
+
+```{r}
+# Regress Weight on all other independent variables
+weight_model <- lm(Weight ~ Age + KM + HP + Metallic + Automatic + CC + Doors + Gears, data = used_cars)
+
+# Obtain the R-squared value
+weight_r_squared <- summary(weight_model)$r.squared
+print(paste("R-squared for Weight model:", weight_r_squared))
+
+
+# Step 2: Calculate VIF using the R-squared value
+vif_weight <- 1 / (1 - weight_r_squared)
+print(paste("VIF for Weight:", vif_weight))
+```
+
+\
+
+```{r}
+summary(weight_model)
+
+```
+
+```{r}
+# New model with only significant variables
+significant_model <- lm(Price ~ Age + KM + HP + Automatic + Gears + Weight, data = used_cars)
+
+# Display the summary of the new model
+summary(significant_model)
+
+```
+
+```{r}
+# Assuming the full model is named 'full_model' and the new model is 'significant_model'
+
+# Retrieve R-squared and Adjusted R-squared from the full model
+full_model_summary <- summary(full_model)
+full_r_squared <- full_model_summary$r.squared
+full_adj_r_squared <- full_model_summary$adj.r.squared
+
+# Retrieve R-squared and Adjusted R-squared from the significant model
+significant_model_summary <- summary(significant_model)
+sig_r_squared <- significant_model_summary$r.squared
+sig_adj_r_squared <- significant_model_summary$adj.r.squared
+
+# Display the results
+cat("Full Model R-squared:", full_r_squared, "\n")
+cat("Full Model Adjusted R-squared:", full_adj_r_squared, "\n")
+cat("Significant Model R-squared:", sig_r_squared, "\n")
+cat("Significant Model Adjusted R-squared:", sig_adj_r_squared, "\n")
+
+```
+
+```{r}
+# Get the summary of the significant model
+model_summary <- summary(significant_model)
+
+# Extract the coefficients
+coefficients <- model_summary$coefficients
+
+# Get the coefficient for Age and KM
+age_coefficient <- coefficients["Age", "Estimate"]
+km_coefficient <- coefficients["KM", "Estimate"]
+
+# Calculate the impact of being one year older
+price_decrease_age <- age_coefficient
+
+# Calculate the impact of accumulating 10,000 more kilometers
+price_decrease_km <- km_coefficient * 10000
+
+# Print the results
+cat("Holding everything else equal:\n")
+cat("The sales price would decrease by €", round(price_decrease_age, 2), " if a car were one year older.\n", sep="")
+cat("The sales price would decrease by €", round(price_decrease_km, 2), " if a car accumulated 10,000 more kilometers.\n", sep="")
+
+```
