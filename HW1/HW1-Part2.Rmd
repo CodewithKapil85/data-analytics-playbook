@@ -7,10 +7,7 @@ output: HW1_part2
 
 1.  **Import that data into R**:
 
-Run a linear regression of **Price** on all the available explanatory
-variables (i.e., **Age, KM, HP, Metallic, Automatic, CC, Doors, Gears, Weight**). Use the
-**summary()** function to show the regression results. (**Note**: R is case sensitive, so be careful
-with the variable names.)
+Run a linear regression of **Price** on all the available explanatory variables (i.e., **Age, KM, HP, Metallic, Automatic, CC, Doors, Gears, Weight**). Use the **summary()** function to show the regression results. (**Note**: R is case sensitive, so be careful with the variable names.)
 
 ```{r}
 # Load necessary libraries
@@ -104,11 +101,7 @@ any(residuals[1:10] == 0)
     print(results)
     ```
 
-4.  Determine the **critical value** (or cutoff) of the tstatistic for a estimate to be considered as
-    significant at **95% confidence level**. You need to first determine the degree of freedom of
-    your model (**Hint**: you can simply retrieve the value of **df.residual** from the regression
-    result.) Then you need to find the corresponding percentile of the t distribution (with that
-    degree of freedom). (**Hint**: use **qt()** function to find a certain percentile of a t distribution.)
+4.  Determine the **critical value** (or cutoff) of the tstatistic for a estimate to be considered as significant at **95% confidence level**. You need to first determine the degree of freedom of your model (**Hint**: you can simply retrieve the value of **df.residual** from the regression result.) Then you need to find the corresponding percentile of the t distribution (with that degree of freedom). (**Hint**: use **qt()** function to find a certain percentile of a t distribution.)
 
 ```{r}
 # Get the degrees of freedom
@@ -127,10 +120,7 @@ print(critical_t)
 
 ```
 
-5.  Calculate the p-value for each Betaj using the defining formula p = 2.Pr(t\<-\|tstat\|).
-    (**Hint**: use **pt()** function for the cdf of t distribution.) Co-list your calculated pvalues along
-    with the pvalues generated from **summary()** of the regression results. They should be
-    exactly the same.
+5.  Calculate the p-value for each Betaj using the defining formula p = 2.Pr(t\<-\|tstat\|). (**Hint**: use **pt()** function for the cdf of t distribution.) Co-list your calculated pvalues along with the pvalues generated from **summary()** of the regression results. They should be exactly the same.
 
     ```{r}
     # Assuming 'model' is your linear regression model
@@ -187,11 +177,7 @@ print(critical_t)
     significant_by_p <- p_values_calculated < 0.05
     ```
 
-6.  Which explanatory variables have significant effects on the outcome, that is, which
-    estimates are significantly different from zero? You can find the answers either by
-    comparing the t-statistics (obtained in Step 3) to the critical values (obtained in Step 4) or by
-    comparing the p-values (obtained in Step 5) to (1confidence level), as we discussed in class.
-    The conclusions should be the same.
+6.  Which explanatory variables have significant effects on the outcome, that is, which estimates are significantly different from zero? You can find the answers either by comparing the t-statistics (obtained in Step 3) to the critical values (obtained in Step 4) or by comparing the p-values (obtained in Step 5) to (1confidence level), as we discussed in class. The conclusions should be the same.
 
     ```{r}
     # Assuming you have already defined significant_by_t and significant_by_p
@@ -215,9 +201,7 @@ print(critical_t)
 
     R-squared = 1 - SSE/SST
 
-    Compare your calculated value with the Rsquared value calculated by the
-    routine. (**Hint**: you can retrieve **r.squared** from the **summary()** output.) Again, they should
-    be the same.
+    Compare your calculated value with the Rsquared value calculated by the routine. (**Hint**: you can retrieve **r.squared** from the **summary()** output.) Again, they should be the same.
 
     ```{r}
 
@@ -246,9 +230,7 @@ print(critical_t)
 
     ```
 
-8.  Install and load the package “**car**”. Use the **vif()** function included in the package to
-    calculate the **variance inflation factor (VIF)** for the estimators. Examine the VIF values
-    and discuss if there is any sign of multicollinearity among independent variables.
+8.  Install and load the package “**car**”. Use the **vif()** function included in the package to calculate the **variance inflation factor (VIF)** for the estimators. Examine the VIF values and discuss if there is any sign of multicollinearity among independent variables.
 
     ```{r}
     install.packages("car")
@@ -272,13 +254,11 @@ print(critical_t)
 
     ```
 
-9.  Reproduce the VIF for the coefficient of **Weight** (which has the largest VIF value), following
-    these two steps:
-    								
+9.  Reproduce the VIF for the coefficient of **Weight** (which has the largest VIF value), following these two steps:
 
     1.  Regress **Weight** on all the other independent variables, and obtain the R-squared
 
-    2.  Calculate the VIF using the defining formula.	
+    2.  Calculate the VIF using the defining formula.
 
     ```{r}
     # Step 1: Regress Weight on all other independent variables
@@ -293,11 +273,9 @@ print(critical_t)
     cat("VIF for Weight:", vif_weight, "\n")
     ```
 
-    **Task 4: Model Comparison** 						
+    **Task 4: Model Comparison**
 
-    10. Remove from the model the independent variables which are NOT significant according to
-        your conclusion in Step 6. Run a new linear regression of **Price** on the remaining
-        independent variables. Use the **summary()** function to show the regression results.
+    10. Remove from the model the independent variables which are NOT significant according to your conclusion in Step 6. Run a new linear regression of **Price** on the remaining independent variables. Use the **summary()** function to show the regression results.
 
         ### Step 1: Identify Non-Significant Variables
 
@@ -313,11 +291,7 @@ summary(new_model)
 
 ```
 
-11. Retrieve and compare the Rsquared and Adjusted RSquared from the two models (the full
-    regression with all independent variables in Step 1 versus the new model with only the
-    independent variables that are significant in Step 10). Discuss your findings with regard to
-    the relative magnitudes of the Rsquared and the Adjusted RSquared from the two models
-    and what they imply.
+11. Retrieve and compare the Rsquared and Adjusted RSquared from the two models (the full regression with all independent variables in Step 1 versus the new model with only the independent variables that are significant in Step 10). Discuss your findings with regard to the relative magnitudes of the Rsquared and the Adjusted RSquared from the two models and what they imply.
 
 ```{r}
 # Full model summary
@@ -343,10 +317,7 @@ cat("New Model Adjusted R-squared:", new_adj_r_squared, "\n")
 
 ```
 
-12. Use the results from the model with a better fit to discuss the effects of certain
-    independent variables on the dependent variable: Holding everything else equal, how much
-    the sales price would decrease if a car were **one year older**? What if a car accumulated
-    **10,000 more kilometers**?
+12. Use the results from the model with a better fit to discuss the effects of certain independent variables on the dependent variable: Holding everything else equal, how much the sales price would decrease if a car were **one year older**? What if a car accumulated **10,000 more kilometers**?
 
 ```{r}
 
